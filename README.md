@@ -41,7 +41,7 @@ This is an Express.js backend for a cosmetic ecommerce application.
    ```
 3. Run server in development mode:
    ```bash
-   npm run dev
+   npm run start
    ```
 
 ## Example Endpoints
