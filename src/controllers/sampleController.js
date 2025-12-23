@@ -1,4 +1,4 @@
 exports.getSample = (req, res) => {
-  res.json({ message: 'Hello from the controller!' });
+  res.json({ message: 'Phanh test deploy!' });
 };
 
