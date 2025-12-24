@@ -20,7 +20,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
 // Database connection
-connectDB();
+connectDB().catch(err => {
+  console.error('Database connection failed:', err.message);
+  console.log('Server will still start without database...');
+});
 
 // Swagger UI setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
@@ -53,6 +56,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✓ Server is running on port ${PORT}`);
+  console.log(`✓ API docs: http://localhost:${PORT}/api-docs`);
+  console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
 });
