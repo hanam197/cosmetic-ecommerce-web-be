@@ -1,24 +1,17 @@
 import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
 import logger from './middlewares/logger.js';
 import sampleRoute from './routes/sample.js';
 import controllerSampleRoute from './routes/controllerSample.js';
 import productsRoute from './routes/products.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/database');
+import connectDB from './config/db.js';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Import middlewares and routes
-const logger = require('./middlewares/logger');
-const sampleRoute = require('./routes/sample');
-const controllerSampleRoute = require('./routes/controllerSample');
-
-// Connect to MongoDB
-connectDB();
 
 // Middlewares
 app.use(cors());
@@ -26,15 +19,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
+// Database connection
+connectDB();
+
 // Swagger UI setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+// Routes
 app.use(sampleRoute);
 app.use(controllerSampleRoute);
 app.use(productsRoute);
-// Routes
-app.use('/api', sampleRoute);
-app.use('/api', controllerSampleRoute);
 
 app.get('/', (req, res) => {
   res.json({
