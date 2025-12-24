@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+
 const router = express.Router();
 
 router.get('/sample', (req, res) => {
   res.json({ message: 'This is a sample route' });
 });
 
-module.exports = router;
+export default router;
 
