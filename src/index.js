@@ -6,7 +6,7 @@ import sampleRoute from './routes/sample.js';
 import controllerSampleRoute from './routes/controllerSample.js';
 import productsRoute from './routes/products.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
-import connectDB from './config/db.js';
+import connectDB from './config/database.js';
 
 dotenv.config();
 
