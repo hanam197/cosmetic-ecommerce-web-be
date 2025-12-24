@@ -1,3 +1,9 @@
+import express from 'express';
+import logger from './middlewares/logger.js';
+import sampleRoute from './routes/sample.js';
+import controllerSampleRoute from './routes/controllerSample.js';
+import productsRoute from './routes/products.js';
+import { swaggerUi, specs } from './swagger/swaggerConfig.js';
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -20,6 +26,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
+// Swagger UI setup
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+app.use(sampleRoute);
+app.use(controllerSampleRoute);
+app.use(productsRoute);
 // Routes
 app.use('/api', sampleRoute);
 app.use('/api', controllerSampleRoute);
