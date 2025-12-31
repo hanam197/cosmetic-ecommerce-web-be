@@ -2,9 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import logger from './middlewares/logger.js';
-import sampleRoute from './routes/sample.js';
-import controllerSampleRoute from './routes/controllerSample.js';
 import productsRoute from './routes/products.js';
+import cartRoute from './routes/cart.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
 import connectDB from './config/database.js';
 
@@ -29,9 +28,8 @@ connectDB().catch(err => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
-app.use(sampleRoute);
-app.use(controllerSampleRoute);
-app.use(productsRoute);
+app.use('/api/products', productsRoute);
+app.use('/api/cart', cartRoute);
 
 app.get('/', (req, res) => {
   res.json({
