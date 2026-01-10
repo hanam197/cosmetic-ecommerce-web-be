@@ -7,9 +7,9 @@ const variantSchema = new mongoose.Schema({
         required: true,
         index: true
     },
-    id: {
+    sku: {
         type: String,
-        required: true,
+        required: [true, 'Variant SKU is required'],
         unique: true,
         trim: true
     },

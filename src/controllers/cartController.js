@@ -45,7 +45,7 @@ export const getCart = async (req, res) => {
 export const addToCart = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { productId, productName, price, quantity, image } = req.body;
+    const { productId, variantId, productName, colorName, size, price, quantity, image } = req.body;
 
     // Validation
     if (!userId || userId.trim() === '') {
@@ -55,10 +55,10 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    if (!productId || !productName || price === undefined || !quantity) {
+    if (!productId || !variantId || !productName || !colorName || price === undefined || !quantity) {
       return res.status(400).json({
         success: false,
-        message: 'Các trường bắt buộc: productId, productName, price, quantity'
+        message: 'Các trường bắt buộc: productId, variantId, productName, colorName, price, quantity'
       });
     }
 
@@ -88,19 +88,23 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // Check if product already in cart
+    // Check if same variant already in cart
     const existingItem = cart.items.find(
-      item => item.productId.toString() === productId.toString()
+      item => item.variantId.toString() === variantId.toString() && 
+              item.size === (size || '')
     );
 
     if (existingItem) {
-      // Update quantity if product exists
+      // Update quantity if same variant exists
       existingItem.quantity += quantity;
     } else {
       // Add new item to cart
       cart.items.push({
         productId,
+        variantId,
         productName,
+        colorName,
+        size: size || '',
         price: Number(price),
         image: image || '',
         quantity
@@ -279,28 +283,6 @@ export const clearCart = async (req, res) => {
     res.status(400).json({
       success: false,
       message: 'Lỗi khi xóa giỏ',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Get all carts (admin only)
- */
-export const getAllCarts = async (req, res) => {
-  try {
-    const carts = await Cart.find();
-
-    res.status(200).json({
-      success: true,
-      data: carts,
-      total: carts.length,
-      message: 'Lấy tất cả giỏ hàng thành công'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi lấy danh sách giỏ hàng',
       error: error.message
     });
   }

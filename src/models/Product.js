@@ -2,11 +2,6 @@ import mongoose from 'mongoose';
 import imageSchema from './Image.js';
 
 const productSchema = new mongoose.Schema({
-  id: {
-    type: Number,
-    required: true,
-    unique: true
-  },
   slug: {
     type: String,
     required: [true, 'Product slug is required'],

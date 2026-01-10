@@ -4,8 +4,7 @@ import {
   addToCart,
   updateCartItem,
   removeFromCart,
-  clearCart,
-  getAllCarts
+  clearCart
 } from '../controllers/cartController.js';
 
 const router = express.Router();
@@ -53,13 +52,21 @@ router.get('/:userId', getCart);
  *             type: object
  *             required:
  *               - productId
+ *               - variantId
  *               - productName
+ *               - colorName
  *               - price
  *               - quantity
  *             properties:
  *               productId:
  *                 type: string
+ *               variantId:
+ *                 type: string
  *               productName:
+ *                 type: string
+ *               colorName:
+ *                 type: string
+ *               size:
  *                 type: string
  *               price:
  *                 type: number
@@ -157,19 +164,5 @@ router.delete('/:userId/item/:itemId', removeFromCart);
  *         description: Giỏ không tìm thấy
  */
 router.delete('/:userId/clear', clearCart);
-
-/**
- * @swagger
- * /api/cart/admin/all:
- *   get:
- *     summary: Lấy tất cả giỏ hàng (admin)
- *     tags: [Cart]
- *     responses:
- *       200:
- *         description: Lấy thành công
- *       500:
- *         description: Lỗi server
- */
-router.get('/admin/all', getAllCarts);
 
 export default router;
