@@ -6,14 +6,27 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: [true, 'Product ID is required']
   },
+  variantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Variant',
+    required: [true, 'Variant ID is required']
+  },
   productName: {
     type: String,
     required: [true, 'Product name is required']
+  },
+  colorName: {
+    type: String,
+    required: [true, 'Color name is required']
   },
   price: {
     type: Number,
     required: [true, 'Product price is required'],
     min: [0, 'Price must be greater than 0']
+  },
+  oldPrice: {
+    type: Number,
+    min: [0, 'Old price must be greater than 0']
   },
   image: {
     type: String
@@ -46,15 +59,15 @@ const cartSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Calculate total price and quantity before saving
-cartSchema.pre('save', function(next) {
+cartSchema.pre('save', function (next) {
   this.totalPrice = this.items.reduce((total, item) => {
     return total + (item.price * item.quantity);
   }, 0);
-  
+
   this.totalQuantity = this.items.reduce((total, item) => {
     return total + item.quantity;
   }, 0);
-  
+
   next();
 });
 
