@@ -1,10 +1,7 @@
 import express from 'express';
 import {
   getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
+  getProductBySlug,
   getProductsByCategory,
   searchProducts
 } from '../controllers/productController.js';
@@ -104,55 +101,7 @@ router.get('/category/:category', getProductsByCategory);
 
 /**
  * @swagger
- * /api/products:
- *   post:
- *     summary: Tạo sản phẩm mới (admin)
- *     tags: [Products]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - description
- *               - price
- *               - category
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *               price:
- *                 type: number
- *               originalPrice:
- *                 type: number
- *               category:
- *                 type: string
- *               stock:
- *                 type: number
- *               image:
- *                 type: string
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *               ingredients:
- *                 type: array
- *                 items:
- *                   type: string
- *               brand:
- *                 type: string
- *     responses:
- *       201:
- *         description: Tạo sản phẩm thành công
- */
-router.post('/', createProduct);
-
-/**
- * @swagger
- * /api/products/{id}:
+ * /api/products/{slug}:
  *   get:
  *     summary: Lấy chi tiết sản phẩm
  *     tags: [Products]
@@ -168,48 +117,6 @@ router.post('/', createProduct);
  *       404:
  *         description: Sản phẩm không tìm thấy
  */
-router.get('/:id', getProductById);
-
-/**
- * @swagger
- * /api/products/{id}:
- *   put:
- *     summary: Cập nhật sản phẩm (admin)
- *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Cập nhật sản phẩm thành công
- */
-router.put('/:id', updateProduct);
-
-/**
- * @swagger
- * /api/products/{id}:
- *   delete:
- *     summary: Xóa sản phẩm (admin)
- *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Xóa sản phẩm thành công
- */
-router.delete('/:id', deleteProduct);
+router.get('/:slug', getProductBySlug);
 
 export default router;

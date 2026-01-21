@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import imageSchema from './Image.js';
+import variantSchema from './Variant.js';
 
 const productSchema = new mongoose.Schema({
   slug: {
@@ -42,16 +43,13 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Product category is required'],
-    enum: ['lip', 'face', 'eye', 'skincare', 'other']
+    enum: ['lip', 'face', 'eye', 'cheek', 'set', 'wellness', 'best_seller']
   },
   variants: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Variant'
-    }
+    variantSchema
   ],
 }, { timestamps: true });
 
-const Product = mongoose.model('Product', productSchema);
+const Product = mongoose.model('Product', productSchema, 'products');
 
 export default Product;
