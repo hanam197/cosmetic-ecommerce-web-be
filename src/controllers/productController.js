@@ -1,4 +1,5 @@
 import Product from "../models/Product.js";
+import { findProducts, findProductsByCategory } from "../dao/productDAO.js";
 
 /**
  * Get all products with pagination and filters
@@ -9,50 +10,9 @@ export const getAllProducts = async (req, res) => {
     const limit = Math.max(Number(req.query.limit) || 4, 1);
     const { category, tag, search } = req.query;
 
-    const filter = {};
+    const result = await findProducts({ category, tag, search, page, limit });
 
-    // category filter (all = không filter)
-    if (category && category !== "all") {
-      filter.category = category;
-    }
-
-    // tag filter
-    if (tag) {
-      filter.tag = tag;
-    }
-
-    // search theo name
-    if (search) {
-      filter.name = { $regex: search, $options: "i" };
-    }
-
-    const total = await Product.countDocuments(filter);
-
-    // query dữ liệu với pagination
-    const products = await Product.find(filter)
-      // .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
-
-    // tính toán pagination
-    const totalPages = Math.ceil(total / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
-
-    res.status(200).json({
-      products,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage,
-        hasPrevPage,
-        nextPage: hasNextPage ? page + 1 : null,
-        prevPage: hasPrevPage ? page - 1 : null,
-      },
-    });
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -97,31 +57,42 @@ export const getProductBySlug = async (req, res) => {
 };
 
 /**
- * Get products by category
+ * Get products by category and tags
  */
-export const getProductsByCategory = async (req, res) => {
+export const getProductsByCategory = async (req, res) => { // req, res are automatically created by Express for every HTTP request.
   try {
-    const { category } = req.params;
-    const { limit = 10 } = req.query;
+    const { category, tag } = req.params;
+    const { sortByPrice, page: pageQuery, limit: limitQuery } = req.query;
 
-    const products = await Product.find({ category, isActive: true })
-      .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+
+    const filter = {};
+    // category filter
+    if (category && category) filter.category = category;
+    // tag filter
+    if (tag) filter.tag = tag;
+
+    const result = await findProductsByCategory({
+      filter,
+      page,
+      limit,
+      sortByPrice
+    });
 
     res.status(200).json({
-      success: true,
-      data: products,
-      total: products.length,
-      message: "Lấy sản phẩm theo danh mục thành công",
+      data: result.products,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / result.limit),
+      },
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Lỗi khi lấy sản phẩm theo danh mục",
-      error: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-};
+}
 
 /**
  * Search products
