@@ -6,17 +6,22 @@ import productsRoute from './routes/products.js';
 import cartRoute from './routes/cart.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
 import connectDB from './config/database.js';
+import authRoute from './routes/auth.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000', 
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
+
 
 // Database connection
 connectDB().catch(err => {
@@ -30,6 +35,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 // Routes
 app.use('/api/products', productsRoute);
 app.use('/api/cart', cartRoute);
+app.use('/api/auth', authRoute);
 
 app.get('/', (req, res) => {
   res.json({
