@@ -6,10 +6,9 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: [true, 'Product ID is required']
   },
-  variantId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Variant',
-    required: [true, 'Variant ID is required']
+  sku: {
+    type: String,
+    required: [true, 'SKU is required']
   },
   productName: {
     type: String,
@@ -40,10 +39,9 @@ const cartItemSchema = new mongoose.Schema({
 
 const cartSchema = new mongoose.Schema({
   userId: {
-    type: String,
-    required: [true, 'User ID is required'],
-    unique: true,
-    trim: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null // guest
   },
   items: [cartItemSchema],
   totalPrice: {
@@ -57,6 +55,8 @@ const cartSchema = new mongoose.Schema({
     min: 0
   }
 }, { timestamps: true });
+
+
 
 // Calculate total price and quantity before saving
 cartSchema.pre('save', async function () {

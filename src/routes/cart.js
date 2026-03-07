@@ -4,44 +4,78 @@ import {
   addToCart,
   updateCartItem,
   removeFromCart,
-  clearCart
+  clearCart,
+  mergeCart,
+  getUserCart,
+  syncCart,
+  addToCartUser
 } from '../controllers/cartController.js';
 
 const router = express.Router();
 
 /**
- * @swagger
- * /api/cart/{userId}:
- *   get:
- *     summary: Lấy giỏ hàng của người dùng
+ * @swagger1
+ * 
+ * /api/cart/merge:
+ *   post:
+ *     summary: Hợp nhất giỏ hàng khách vào giỏ hàng user (khi user đăng nhập)
  *     tags: [Cart]
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: userId
- *         required: true
  *         schema:
  *           type: string
- *         description: ID của người dùng
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - guestCart
+ *             properties:
+ *               guestCart:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
  *     responses:
  *       200:
- *         description: Lấy giỏ hàng thành công
+ *         description: Hợp nhất thành công
  *       400:
- *         description: User ID là bắt buộc
- *       500:
- *         description: Lỗi server
+ *         description: Dữ liệu không hợp lệ
  */
-router.get('/:userId', getCart);
+router.post('/merge', mergeCart);
 
 /**
  * @swagger
- * /api/cart/{userId}/add:
+ * /api/cart/clear:
+ *   delete:
+ *     summary: Xóa toàn bộ giỏ hàng
+ *     tags: [Cart]
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
+ *       404:
+ *         description: Giỏ không tìm thấy
+ */
+router.delete('/clear', clearCart);
+
+/**
+ * @swagger
+ * /api/cart/add:
  *   post:
  *     summary: Thêm sản phẩm vào giỏ
  *     tags: [Cart]
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: userId
- *         required: true
  *         schema:
  *           type: string
  *     requestBody:
@@ -52,7 +86,7 @@ router.get('/:userId', getCart);
  *             type: object
  *             required:
  *               - productId
- *               - variantId
+ *               - sku
  *               - productName
  *               - colorName
  *               - price
@@ -60,15 +94,15 @@ router.get('/:userId', getCart);
  *             properties:
  *               productId:
  *                 type: string
- *               variantId:
+ *               sku:
  *                 type: string
  *               productName:
  *                 type: string
  *               colorName:
  *                 type: string
- *               size:
- *                 type: string
  *               price:
+ *                 type: number
+ *               oldPrice:
  *                 type: number
  *               quantity:
  *                 type: number
@@ -82,21 +116,20 @@ router.get('/:userId', getCart);
  *       500:
  *         description: Lỗi server
  */
-router.post('/:userId/add', addToCart);
+router.post('/add', addToCart);
 
 /**
  * @swagger
- * /api/cart/{userId}/item/{itemId}:
+ * /api/cart/item:
  *   patch:
  *     summary: Cập nhật số lượng sản phẩm
  *     tags: [Cart]
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: userId
- *         required: true
  *         schema:
  *           type: string
- *       - in: path
+ *       - in: query
  *         name: itemId
  *         required: true
  *         schema:
@@ -118,21 +151,20 @@ router.post('/:userId/add', addToCart);
  *       400:
  *         description: Dữ liệu không hợp lệ
  */
-router.patch('/:userId/item/:itemId', updateCartItem);
+router.patch('/item', updateCartItem);
 
 /**
  * @swagger
- * /api/cart/{userId}/item/{itemId}:
+ * /api/cart/item:
  *   delete:
  *     summary: Xóa sản phẩm khỏi giỏ
  *     tags: [Cart]
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: userId
- *         required: true
  *         schema:
  *           type: string
- *       - in: path
+ *       - in: query
  *         name: itemId
  *         required: true
  *         schema:
@@ -143,26 +175,130 @@ router.patch('/:userId/item/:itemId', updateCartItem);
  *       404:
  *         description: Giỏ hoặc sản phẩm không tìm thấy
  */
-router.delete('/:userId/item/:itemId', removeFromCart);
+router.delete('/item', removeFromCart);
 
 /**
  * @swagger
- * /api/cart/{userId}/clear:
- *   delete:
- *     summary: Xóa toàn bộ giỏ hàng
+ * /api/cart:
+ *   get:
+ *     summary: Lấy giỏ hàng của người dùng (null userId là khách)
  *     tags: [Cart]
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: userId
- *         required: true
  *         schema:
  *           type: string
+ *         description: ID của người dùng (optional, null cho khách)
  *     responses:
  *       200:
- *         description: Xóa thành công
- *       404:
- *         description: Giỏ không tìm thấy
+ *         description: Lấy giỏ hàng thành công
+ *       500:
+ *         description: Lỗi server
  */
-router.delete('/:userId/clear', clearCart);
+router.get('/', getCart);
+
+/**
+ * @swagger
+ * /api/cart/user:
+ *   get:
+ *     summary: Lấy giỏ hàng của user đã login
+ *     tags: [Cart]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy giỏ hàng thành công
+ *       401:
+ *         description: Chưa đăng nhập
+ *       500:
+ *         description: Lỗi server
+ */
+router.get('/user', getUserCart);
+
+/**
+ * @swagger
+ * /api/cart/sync:
+ *   post:
+ *     summary: Đồng bộ giỏ hàng từ frontend lên server (khi user login)
+ *     tags: [Cart]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - items
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                     sku:
+ *                       type: string
+ *                     quantity:
+ *                       type: integer
+ *     responses:
+ *       200:
+ *         description: Đồng bộ thành công
+ *       400:
+ *         description: Dữ liệu không hợp lệ
+ *       401:
+ *         description: Chưa đăng nhập
+ */
+router.post('/sync', syncCart);
+
+/**
+ * @swagger
+ * /api/cart/add-auth:
+ *   post:
+ *     summary: Thêm sản phẩm vào giỏ (cho user đã login)
+ *     tags: [Cart]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - productId
+ *               - sku
+ *               - productName
+ *               - colorName
+ *               - price
+ *               - quantity
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               sku:
+ *                 type: string
+ *               productName:
+ *                 type: string
+ *               colorName:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               quantity:
+ *                 type: integer
+ *               image:
+ *                 type: string
+ *               oldPrice:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Thêm sản phẩm thành công
+ *       400:
+ *         description: Dữ liệu không hợp lệ
+ *       401:
+ *         description: Chưa đăng nhập
+ */
+router.post('/add-auth', addToCartUser);
 
 export default router;

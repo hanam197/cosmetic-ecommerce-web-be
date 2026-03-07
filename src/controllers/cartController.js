@@ -1,28 +1,22 @@
 import Cart from '../models/Cart.js';
 
+// Helper function: Find cart by userId (null for guest)
+const findCart = async (userId) => {
+  return Cart.findOne({ userId });
+};
+
 /**
- * Get cart by user ID
+ * Get cart by user ID (null userId means guest)
  */
 export const getCart = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.query;
 
-    if (!userId || userId.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID là bắt buộc'
-      });
-    }
-
-    let cart = await Cart.findOne({ userId });
+    let cart = await findCart(userId);
 
     if (!cart) {
-      cart = await Cart.create({
-        userId,
-        items: [],
-        totalPrice: 0,
-        totalQuantity: 0
-      });
+      const cartData = { items: [], totalPrice: 0, totalQuantity: 0, userId };
+      cart = await Cart.create(cartData);
     }
 
     res.status(200).json({
@@ -44,21 +38,13 @@ export const getCart = async (req, res) => {
  */
 export const addToCart = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const { productId, variantId, productName, colorName, size, price, quantity, image } = req.body;
+    const { userId } = req.query;
+    const { productId, sku, productName, colorName, price, quantity, image, oldPrice } = req.body;
 
-    // Validation
-    if (!userId || userId.trim() === '') {
+    if (!productId || !sku || !productName || !colorName || price === undefined || !quantity) {
       return res.status(400).json({
         success: false,
-        message: 'User ID là bắt buộc'
-      });
-    }
-
-    if (!productId || !variantId || !productName || !colorName || price === undefined || !quantity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Các trường bắt buộc: productId, variantId, productName, colorName, price, quantity'
+        message: 'Các trường bắt buộc: productId, sku, productName, colorName, price, quantity'
       });
     }
 
@@ -76,22 +62,18 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    let cart = await Cart.findOne({ userId });
+    let cart = await findCart(userId);
 
     // Create cart if not exists
     if (!cart) {
-      cart = new Cart({
-        userId,
-        items: [],
-        totalPrice: 0,
-        totalQuantity: 0
-      });
+      const cartData = { items: [], userId };
+      cart = new Cart(cartData);
     }
 
     // Check if same variant already in cart
     const existingItem = cart.items.find(
-      item => item.variantId.toString() === variantId.toString() && 
-              item.size === (size || '')
+      item => item.sku === sku && 
+              item.colorName === colorName
     );
 
     if (existingItem) {
@@ -101,11 +83,11 @@ export const addToCart = async (req, res) => {
       // Add new item to cart
       cart.items.push({
         productId,
-        variantId,
+        sku,
         productName,
         colorName,
-        size: size || '',
         price: Number(price),
+        oldPrice: oldPrice ? Number(oldPrice) : undefined,
         image: image || '',
         quantity
       });
@@ -132,15 +114,8 @@ export const addToCart = async (req, res) => {
  */
 export const updateCartItem = async (req, res) => {
   try {
-    const { userId, itemId } = req.params;
+    const { userId, itemId } = req.query;
     const { quantity } = req.body;
-
-    if (!userId || userId.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID là bắt buộc'
-      });
-    }
 
     if (!itemId || itemId.trim() === '') {
       return res.status(400).json({
@@ -156,7 +131,7 @@ export const updateCartItem = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await findCart(userId);
 
     if (!cart) {
       return res.status(404).json({
@@ -196,14 +171,7 @@ export const updateCartItem = async (req, res) => {
  */
 export const removeFromCart = async (req, res) => {
   try {
-    const { userId, itemId } = req.params;
-
-    if (!userId || userId.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID là bắt buộc'
-      });
-    }
+    const { userId, itemId } = req.query;
 
     if (!itemId || itemId.trim() === '') {
       return res.status(400).json({
@@ -212,7 +180,7 @@ export const removeFromCart = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await findCart(userId);
 
     if (!cart) {
       return res.status(404).json({
@@ -251,16 +219,9 @@ export const removeFromCart = async (req, res) => {
  */
 export const clearCart = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.query;
 
-    if (!userId || userId.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID là bắt buộc'
-      });
-    }
-
-    let cart = await Cart.findOne({ userId });
+    let cart = await findCart(userId);
 
     if (!cart) {
       return res.status(404).json({
@@ -287,3 +248,248 @@ export const clearCart = async (req, res) => {
     });
   }
 };
+
+/**
+ * Merge guest cart to user cart (when user logs in)
+ */
+export const mergeCart = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const { guestCart } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId là bắt buộc'
+      });
+    }
+
+    if (!guestCart || !Array.isArray(guestCart.items)) {
+      return res.status(400).json({
+        success: false,
+        message: 'guestCart với items là bắt buộc'
+      });
+    }
+
+    // Get user's cart from DB
+    let userCart = await findCart(userId);
+
+    // Create new cart if not exists
+    if (!userCart) {
+      userCart = new Cart({
+        userId,
+        items: []
+      });
+    }
+
+    // Merge items from guest cart
+    guestCart.items.forEach(guestItem => {
+      const existingItem = userCart.items.find(
+        item => item.sku === guestItem.sku && 
+                item.colorName === guestItem.colorName
+      );
+
+      if (existingItem) {
+        // If same product exists, add quantity
+        existingItem.quantity += guestItem.quantity;
+      } else {
+        // Otherwise add new item
+        userCart.items.push(guestItem);
+      }
+    });
+
+    // Save to DB
+    await userCart.save();
+
+    res.status(200).json({
+      success: true,
+      data: userCart,
+      message: 'Hợp nhất giỏ hàng thành công'
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Lỗi khi hợp nhất giỏ hàng',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get cart for authenticated user
+ */
+export const getUserCart = async (req, res) => {
+  try {
+    const userId = req.user.id; // From auth middleware
+
+    let cart = await findCart(userId);
+
+    if (!cart) {
+      const cartData = { items: [], totalPrice: 0, totalQuantity: 0, userId };
+      cart = await Cart.create(cartData);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: cart,
+      message: 'Lấy giỏ hàng thành công'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy giỏ hàng',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Sync cart from frontend to server (when user logs in)
+ * Receives array of items from localStorage and merges with user's cart
+ */
+export const syncCart = async (req, res) => {
+  try {
+    const userId = req.user.id; // From auth middleware
+    const { items } = req.body;
+
+    if (!Array.isArray(items)) {
+      return res.status(400).json({
+        success: false,
+        message: 'items phải là array'
+      });
+    }
+
+    // Get user's cart from DB
+    let userCart = await findCart(userId);
+
+    // Create new cart if not exists
+    if (!userCart) {
+      userCart = new Cart({
+        userId,
+        items: []
+      });
+    }
+
+    // Merge items from frontend cart
+    // Frontend sends: { productId, quantity, sku }
+    for (const frontendItem of items) {
+      const { productId, quantity, sku } = frontendItem;
+
+      if (!productId || !quantity) {
+        continue; // Skip invalid items
+      }
+
+      // Check if item already exists in user's cart
+      const existingItem = userCart.items.find(
+        item => item.productId.toString() === productId.toString() && 
+                item.sku === sku
+      );
+
+      if (existingItem) {
+        // If same product exists, add quantity
+        existingItem.quantity += quantity;
+      } else {
+        // Otherwise, we would need to fetch product details
+        // For now, just add basic item (frontend should send full details)
+        userCart.items.push({
+          productId,
+          sku,
+          quantity
+        });
+      }
+    }
+
+    // Save to DB
+    await userCart.save();
+
+    res.status(200).json({
+      success: true,
+      data: userCart,
+      message: 'Đồng bộ giỏ hàng thành công'
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Lỗi khi đồng bộ giỏ hàng',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Add to cart for authenticated user
+ */
+export const addToCartUser = async (req, res) => {
+  try {
+    const userId = req.user.id; // From auth middleware
+    const { productId, sku, productName, colorName, price, quantity, image, oldPrice } = req.body;
+
+    if (!productId || !sku || !productName || !colorName || price === undefined || !quantity) {
+      return res.status(400).json({
+        success: false,
+        message: 'Các trường bắt buộc: productId, sku, productName, colorName, price, quantity'
+      });
+    }
+
+    if (isNaN(price) || price < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Giá sản phẩm không hợp lệ'
+      });
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Số lượng phải là số nguyên >= 1'
+      });
+    }
+
+    let cart = await findCart(userId);
+
+    // Create cart if not exists
+    if (!cart) {
+      const cartData = { items: [], userId };
+      cart = new Cart(cartData);
+    }
+
+    // Check if same variant already in cart
+    const existingItem = cart.items.find(
+      item => item.sku === sku && 
+              item.colorName === colorName
+    );
+
+    if (existingItem) {
+      // Update quantity if same variant exists
+      existingItem.quantity += quantity;
+    } else {
+      // Add new item to cart
+      cart.items.push({
+        productId,
+        sku,
+        productName,
+        colorName,
+        price: Number(price),
+        oldPrice: oldPrice ? Number(oldPrice) : undefined,
+        image: image || '',
+        quantity
+      });
+    }
+
+    await cart.save();
+
+    res.status(201).json({
+      success: true,
+      data: cart,
+      message: 'Thêm sản phẩm vào giỏ thành công'
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Lỗi khi thêm sản phẩm vào giỏ',
+      error: error.message
+    });
+  }
+};
+
+
