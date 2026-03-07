@@ -10,7 +10,6 @@ import productsRoute from './routes/products.js';
 import cartRoute from './routes/cart.js';
 import ordersRoute from './routes/orders.js';
 import paymentsRoute from './routes/payments.js';
-import testRoute from './routes/test.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
 import connectDB from './config/database.js';
 import authRoute from './routes/auth.js';
@@ -61,7 +60,6 @@ app.use('/api/cart', cartRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/orders', ordersRoute);
 app.use('/api/payment', paymentsRoute);
-app.use('/api/test', testRoute);
 
 app.get('/', (req, res) => {
   res.json({
