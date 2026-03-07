@@ -1,5 +1,5 @@
 import Product from "../models/Product.js";
-import { findProducts, findProductsByCategory } from "../dao/productDAO.js";
+import { findProducts, findProductsByCategory } from "../dao/ProductDAO.js";
 
 /**
  * Get all products with pagination and filters
