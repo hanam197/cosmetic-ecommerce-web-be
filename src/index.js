@@ -4,6 +4,7 @@ import cors from 'cors';
 import logger from './middlewares/logger.js';
 import productsRoute from './routes/products.js';
 import cartRoute from './routes/cart.js';
+import collectionsRoute from './routes/collections.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
 import connectDB from './config/database.js';
 
@@ -30,6 +31,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 // Routes
 app.use('/api/products', productsRoute);
 app.use('/api/cart', cartRoute);
+app.use('/api/collections', collectionsRoute);
 
 app.get('/', (req, res) => {
   res.json({
