@@ -8,6 +8,7 @@ import productsRoute from './routes/products.js';
 import cartRoute from './routes/cart.js';
 import ordersRoute from './routes/orders.js';
 import paymentsRoute from './routes/payments.js';
+import collectionsRoute from './routes/collections.js';
 import { swaggerUi, specs } from './swagger/swaggerConfig.js';
 import connectDB from './config/database.js';
 import authRoute from './routes/auth.js';
@@ -61,6 +62,7 @@ app.use('/api/auth', authRoute);
 app.use('/api/user', userRoute);
 app.use('/api/orders', ordersRoute);
 app.use('/api/payment', paymentsRoute);
+app.use('/api/collections', collectionsRoute);
 
 app.get('/', (req, res) => {
   res.json({
