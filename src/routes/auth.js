@@ -4,6 +4,8 @@ import { register, login, resetPassword, handleOtp } from '../controllers/authCo
 
 const router = express.Router();
 
+app.set("trust proxy", 1);
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5
