@@ -17,6 +17,9 @@ import userRoute from './routes/user.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for accurate rate limiting behind proxies/load balancers
+app.set('trust proxy', 1);
+
 console.log('=== ENV VARIABLES CHECK ===');
 console.log('PORT:', PORT);
 console.log('FRONTEND_URL:', process.env.FRONTEND_URL || 'http://localhost:3001');
