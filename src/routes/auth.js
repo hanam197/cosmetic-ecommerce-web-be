@@ -1,6 +1,6 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { register, login, resetPassword, handleOtp } from '../controllers/authController.js';
+import { register, login, resetPassword, handleOtp, logout } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -159,5 +159,18 @@ router.post('/resetpassword', resetPassword);
  *         description: Lỗi server
  */
 router.post('/otp', otpLimiter, handleOtp);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Đăng xuất
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Đăng xuất thành công
+ */
+router.post('/logout', logout);
+
 
 export default router;
