@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 // Lấy thông tin user (GET)
 export const getUserProfile = async (req, res) => {
@@ -34,14 +35,14 @@ export const updateUserProfile = async (req, res) => {
     if (!user.addresses) user.addresses = [];
     if (!user.paymentMethods) user.paymentMethods = [];
 
-    // 1. Thông tin cá nhân
+    // Thông tin cá nhân
     if (action === "updateInfo") {
       user.firstName = firstName || user.firstName;
       user.lastName = lastName || user.lastName;
       user.email = email || user.email;
       await user.save();
 
-      // TẠO TOKEN MỚI VỚI THÔNG TIN ĐÃ CẬP NHẬT
+      // Tạo token mới với thông tin cập nhật
       const tokenData = {
         userId: user._id,
         email: user.email,
@@ -52,11 +53,11 @@ export const updateUserProfile = async (req, res) => {
         expiresIn: process.env.JWT_EXPIRES_IN || "1d",
       });
 
-      // GHI ĐÈ COOKIE MỚI
+      //cookie mới với token mới
       res.cookie("token", newToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // hỗ trợ cookie trên production với domain khác
         maxAge: Number(process.env.COOKIE_EXPIRES_MS) || 86400000,
         path: "/",
       });
@@ -66,7 +67,7 @@ export const updateUserProfile = async (req, res) => {
         .json({ message: "Profile updated successfully", user });
     }
 
-    // --- Helper function cho địa chỉ ---
+    // Địa chỉ
     const handleDefaultAddressLogic = (isDefault, currentAddressId = null) => {
       if (isDefault) {
         user.addresses.forEach((addr) => {
@@ -77,7 +78,7 @@ export const updateUserProfile = async (req, res) => {
       }
     };
 
-    // 2. Thêm địa chỉ mới
+    // Thêm địa chỉ mới
     if (action === "addAddress") {
       if (user.addresses.length >= 5) {
         return res
@@ -96,7 +97,7 @@ export const updateUserProfile = async (req, res) => {
         .json({ message: "Address added", addresses: user.addresses });
     }
 
-    // 3. Cập nhật địa chỉ
+    // Cập nhật địa chỉ
     if (action === "updateAddress") {
       const addrToUpdate = user.addresses.id(addressId);
       if (!addrToUpdate)
@@ -121,7 +122,7 @@ export const updateUserProfile = async (req, res) => {
         .json({ message: "Address updated", addresses: user.addresses });
     }
 
-    // 4. Xóa địa chỉ
+    // Xóa địa chỉ
     if (action === "removeAddress") {
       const addrToRemove = user.addresses.id(addressId);
       if (addrToRemove?.isDefault && user.addresses.length > 1) {
@@ -140,7 +141,7 @@ export const updateUserProfile = async (req, res) => {
         .json({ message: "Address removed", addresses: user.addresses });
     }
 
-    // 5. Thêm phương thức thanh toán
+    // Thêm phương thức thanh toán
     if (action === "addPaymentMethod") {
       if (user.paymentMethods.length >= 5) {
         return res
@@ -167,7 +168,7 @@ export const updateUserProfile = async (req, res) => {
         });
     }
 
-    // 6. Xóa phương thức thanh toán
+    // Xóa phương thức thanh toán
     if (action === "removePaymentMethod") {
       user.paymentMethods = user.paymentMethods.filter(
         (pm) => pm._id.toString() !== paymentId,
@@ -181,7 +182,7 @@ export const updateUserProfile = async (req, res) => {
         });
     }
 
-    // 7. Set mặc định phương thức thanh toán
+    // Set mặc định phương thức thanh toán
     if (action === "setDefaultPaymentMethod") {
       user.paymentMethods.forEach((pm) => (pm.isDefault = false));
       const pmToSet = user.paymentMethods.id(paymentId);
