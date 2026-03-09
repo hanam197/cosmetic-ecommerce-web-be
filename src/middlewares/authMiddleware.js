@@ -4,6 +4,8 @@ export const verifyToken = (req, res, next) => {
   try {
     // Đọc token từ cookie do cookie-parser xử lý
     const token = req.cookies.token;
+
+    // console.log("Token nhận được:", token);
     
     if (!token) {
       return res.status(401).json({ error: "Unauthorized - No token provided" });

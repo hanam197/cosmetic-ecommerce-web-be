@@ -34,6 +34,7 @@ export const register = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true, secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: Number(process.env.COOKIE_EXPIRES_MS) || 86400000, path: "/",
     });
     return res.status(201).json({ message: "Registration successful", user: tokenData });
@@ -68,7 +69,8 @@ export const login = async (req, res) => {
   } catch (error) { return res.status(500).json({ error: "Internal server error" }); }
 };
 
-// Thêm hàm logout này vào cuối file authController.js
+// Lấy thông tin user (GET)
+// Cập nhật thông tin user (PUT)
 export const logout = (req, res) => {
   try {
     // Xóa cookie token bằng cách set thời gian sống của nó về 0
