@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { register, login, resetPassword, handleOtp } from '../controllers/authController.js';
 
 const router = express.Router();
-
+const app = express();
 app.set("trust proxy", 1);
 
 const loginLimiter = rateLimit({
