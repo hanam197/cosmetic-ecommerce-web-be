@@ -4,12 +4,14 @@ dotenv.config();
 
 const emailUser = process.env.EMAIL_USER;
 const emailPass = process.env.EMAIL_PASS;
+const emailIpFamily = Number(process.env.EMAIL_IP_FAMILY) || 4;
 
 const transporterConfig = process.env.EMAIL_HOST
   ? {
       host: process.env.EMAIL_HOST,
       port: Number(process.env.EMAIL_PORT) || 587,
       secure: process.env.EMAIL_SECURE === "true",
+      family: emailIpFamily,
       auth: { user: emailUser, pass: emailPass },
       connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 20000,
       greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 10000,
@@ -17,6 +19,7 @@ const transporterConfig = process.env.EMAIL_HOST
     }
   : {
       service: process.env.EMAIL_SERVICE || "gmail",
+      family: emailIpFamily,
       auth: { user: emailUser, pass: emailPass },
       connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 20000,
       greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 10000,
@@ -75,6 +78,7 @@ export const sendOtpEmail = async (email, otpCode) => {
       responseCode: error.responseCode,
       host: process.env.EMAIL_HOST || "gmail-service",
       port: process.env.EMAIL_PORT || "default",
+      family: emailIpFamily,
     });
     throw error;
   }
