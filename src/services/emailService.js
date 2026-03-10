@@ -1,85 +1,61 @@
-import nodemailer from "nodemailer";
+import emailjs from "@emailjs/nodejs";
 import dotenv from "dotenv";
 dotenv.config();
 
-const emailUser = process.env.EMAIL_USER;
-const emailPass = process.env.EMAIL_PASS;
-const emailIpFamily = Number(process.env.EMAIL_IP_FAMILY) || 4;
+const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
+const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
+const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
+const emailjsPrivateKey = process.env.EMAILJS_PRIVATE_KEY;
+const senderName = process.env.EMAILJS_FROM_NAME || "Ophelia Cosmetic";
+const senderEmail = process.env.EMAILJS_FROM_EMAIL || "hanam15c4a@gmail.com";
 
-const transporterConfig = process.env.EMAIL_HOST
-  ? {
-      host: process.env.EMAIL_HOST,
-      port: Number(process.env.EMAIL_PORT) || 587,
-      secure: process.env.EMAIL_SECURE === "true",
-      family: emailIpFamily,
-      auth: { user: emailUser, pass: emailPass },
-      connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 20000,
-      greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 10000,
-      socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS) || 20000,
-    }
-  : {
-      service: process.env.EMAIL_SERVICE || "gmail",
-      family: emailIpFamily,
-      auth: { user: emailUser, pass: emailPass },
-      connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 20000,
-      greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 10000,
-      socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS) || 20000,
-    };
-
-const transporter = nodemailer.createTransport(transporterConfig);
+const parseErrorText = (text) => {
+  if (!text || typeof text !== "string") return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
 
 export const sendOtpEmail = async (email, otpCode) => {
-  if (!emailUser || !emailPass) {
-    throw new Error("Email config missing: set EMAIL_USER and EMAIL_PASS");
+  if (!emailjsServiceId || !emailjsTemplateId || !emailjsPublicKey || !emailjsPrivateKey) {
+    throw new Error(
+      "Email config missing: set EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY, EMAILJS_PRIVATE_KEY"
+    );
   }
 
-  const mailOptions = {
-    from: `"Ophelia Cosmetic" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "Registration Verification Code (OTP)",
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:8px;background:#fff">
-          <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid #f2f2f2">
-              <h2 style="color:#d86ca2;margin:0">Verification Code</h2>
-          </div>
+  const appName = process.env.EMAIL_APP_NAME || "Ophelia Cosmetic";
+  const expiryMinutes = process.env.OTP_EXPIRY_MINUTES || "5";
 
-          <p style="font-size:16px;color:#333;margin:20px 0 10px">
-              Hello homie!
-          </p>
-
-          <p style="font-size:16px;color:#333">
-              Use the OTP below to complete your verification. This code is <strong>valid for 5 minutes</strong>.
-          </p>
-
-          <div style="text-align:center;margin:25px 0">
-              <span style="display:inline-block;font-size:32px;letter-spacing:6px;font-weight:bold;color:#d86ca2;padding:15px 25px;border:3px dashed #f7c7e0;border-radius:8px">
-                  ${otpCode}
-              </span>
-          </div>
-
-          <p style="font-size:14px;color:#666;margin-top:30px">
-              If you didn’t request this, just ignore this email — nothing will change.
-          </p>
-
-          <p style="font-size:14px;color:#666;margin-top:10px">
-              Thank you for choosing <strong>Ophelia Cosmetic Store</strong>! <img data-emoji="🌟" alt="🌟" aria-label="🌟" draggable="false" src="https://fonts.gstatic.com/s/e/notoemoji/17.0/1f31f/72.png" style="width: 18px; height: 18px; vertical-align: middle;" loading="lazy">
-          </p>
-      </div>
-    `,
-  };
   try {
-    return await transporter.sendMail(mailOptions);
+    return await emailjs.send(
+      emailjsServiceId,
+      emailjsTemplateId,
+      {
+        email: email,
+        passcode: otpCode,
+        app_name: appName,
+        expiry_minutes: String(expiryMinutes),
+        sender_name: senderName,
+        sender_email: senderEmail,
+      },
+      {
+        publicKey: emailjsPublicKey,
+        privateKey: emailjsPrivateKey,
+      }
+    );
   } catch (error) {
-    console.error("[sendOtpEmail] SMTP send failed", {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      responseCode: error.responseCode,
-      host: process.env.EMAIL_HOST || "gmail-service",
-      port: process.env.EMAIL_PORT || "default",
-      family: emailIpFamily,
+    const parsed = parseErrorText(error?.text);
+    const detail = parsed?.text || parsed?.message || error?.text || error?.message || "Unknown EmailJS error";
+
+    console.error("[sendOtpEmail] EmailJS send failed", {
+      status: error?.status || null,
+      detail,
+      rawText: error?.text || null,
+      errorType: error?.constructor?.name || typeof error,
     });
-    throw error;
+
+    throw new Error(`EmailJS send failed: ${detail}`);
   }
 };

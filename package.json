@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/phanh247/cosmetic-ecommerce-web-be#readme",
   "dependencies": {
+    "@emailjs/nodejs": "^5.0.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -30,7 +31,6 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^9.0.2",
-    "nodemailer": "^8.0.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "vnpay": "^2.4.4",
