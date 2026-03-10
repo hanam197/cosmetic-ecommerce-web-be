@@ -101,30 +101,60 @@ export const resetPassword = async (req, res) => {
 export const handleOtp = async (req, res) => {
   try {
     const { action, email, otp, type } = req.body;
+    console.debug("[handleOtp] Incoming request", {
+      action,
+      email,
+      type,
+      hasOtp: Boolean(otp),
+      otpLength: otp ? String(otp).length : 0,
+    });
 
     if (action === "send") {
       if (!email) return res.status(400).json({ error: "Email is required" });
       const existingUser = await UserDAO.findByEmail(email);
+      console.debug("[handleOtp][send] User lookup result", {
+        email,
+        type,
+        exists: Boolean(existingUser),
+      });
       if (type === "register" && existingUser) return res.status(400).json({ error: "Email already registered." });
       if (type === "reset" && !existingUser) return res.status(400).json({ error: "Email not registered." });
 
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      console.debug("[handleOtp][send] OTP generated", { email, otpLength: generatedOtp.length });
       await OtpDAO.saveOtp(email, generatedOtp);
+      console.debug("[handleOtp][send] OTP saved", { email });
       await sendOtpEmail(email, generatedOtp);
+      console.debug("[handleOtp][send] OTP email sent", { email });
       return res.status(200).json({ message: "OTP sent successfully" });
     }
 
     if (action === "verify") {
       if (!email || !otp) return res.status(400).json({ error: "Missing data" });
       const otpRecord = await OtpDAO.findOtp(email);
+      console.debug("[handleOtp][verify] OTP lookup", {
+        email,
+        found: Boolean(otpRecord),
+      });
       if (!otpRecord) return res.status(400).json({ error: "OTP expired or invalid" });
       
       if (otpRecord.code === String(otp)) {
+        console.debug("[handleOtp][verify] OTP match", { email });
         await OtpDAO.deleteOtp(email);
+        console.debug("[handleOtp][verify] OTP deleted after verification", { email });
         const regToken = jwt.sign({ email: email, verified: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
         return res.status(200).json({ message: "OTP verified" });
-      } else return res.status(400).json({ error: "OTP is incorrect" });
+      } else {
+        console.debug("[handleOtp][verify] OTP mismatch", { email });
+        return res.status(400).json({ error: "OTP is incorrect" });
+      }
     }
     return res.status(400).json({ error: "Invalid action" });
-  } catch (error) { return res.status(500).json({ error: "System error" }); }
+  } catch (error) {
+    console.error("[handleOtp] System error", {
+      message: error.message,
+      stack: error.stack,
+    });
+    return res.status(500).json({ error: "System error" });
+  }
 };
