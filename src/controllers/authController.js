@@ -121,6 +121,7 @@ export const handleOtp = async (req, res) => {
       
       if (otpRecord.code === String(otp)) {
         await OtpDAO.deleteOtp(email);
+        const regToken = jwt.sign({ email: email, verified: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
         return res.status(200).json({ message: "OTP verified" });
       } else return res.status(400).json({ error: "OTP is incorrect" });
     }
