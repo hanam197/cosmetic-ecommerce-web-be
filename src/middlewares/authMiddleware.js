@@ -19,6 +19,8 @@ export const verifyToken = (req, res, next) => {
     
     // Cho phép đi tiếp vào Controller
     next();
+
+    
   } catch (error) {
     console.error("Auth Middleware Error:", error.message);
     return res.status(401).json({ error: "Unauthorized - Invalid token" });
