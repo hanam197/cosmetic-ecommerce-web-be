@@ -2,12 +2,34 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+
+const transporterConfig = process.env.EMAIL_HOST
+  ? {
+      host: process.env.EMAIL_HOST,
+      port: Number(process.env.EMAIL_PORT) || 587,
+      secure: process.env.EMAIL_SECURE === "true",
+      auth: { user: emailUser, pass: emailPass },
+      connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 20000,
+      greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 10000,
+      socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS) || 20000,
+    }
+  : {
+      service: process.env.EMAIL_SERVICE || "gmail",
+      auth: { user: emailUser, pass: emailPass },
+      connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 20000,
+      greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 10000,
+      socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS) || 20000,
+    };
+
+const transporter = nodemailer.createTransport(transporterConfig);
 
 export const sendOtpEmail = async (email, otpCode) => {
+  if (!emailUser || !emailPass) {
+    throw new Error("Email config missing: set EMAIL_USER and EMAIL_PASS");
+  }
+
   const mailOptions = {
     from: `"Ophelia Cosmetic" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -42,5 +64,18 @@ export const sendOtpEmail = async (email, otpCode) => {
       </div>
     `,
   };
-  return await transporter.sendMail(mailOptions);
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("[sendOtpEmail] SMTP send failed", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      host: process.env.EMAIL_HOST || "gmail-service",
+      port: process.env.EMAIL_PORT || "default",
+    });
+    throw error;
+  }
 };
