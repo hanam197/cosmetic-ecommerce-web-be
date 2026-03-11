@@ -16,7 +16,7 @@ const cartItemSchema = new mongoose.Schema({
   },
   colorName: {
     type: String,
-    required: [true, 'Color name is required']
+    default: ''
   },
   price: {
     type: Number,

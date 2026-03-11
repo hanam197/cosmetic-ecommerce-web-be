@@ -10,6 +10,7 @@ import {
   syncCart,
   addToCartUser
 } from '../controllers/cartController.js';
+import { verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -46,7 +47,7 @@ const router = express.Router();
  *       400:
  *         description: Dữ liệu không hợp lệ
  */
-router.post('/merge', mergeCart);
+router.post('/merge', verifyToken, mergeCart);
 
 /**
  * @swagger
@@ -213,7 +214,7 @@ router.get('/', getCart);
  *       500:
  *         description: Lỗi server
  */
-router.get('/user', getUserCart);
+router.get('/user', verifyToken, getUserCart);
 
 /**
  * @swagger
@@ -251,7 +252,7 @@ router.get('/user', getUserCart);
  *       401:
  *         description: Chưa đăng nhập
  */
-router.post('/sync', syncCart);
+router.post('/sync', verifyToken, syncCart);
 
 /**
  * @swagger
@@ -299,6 +300,6 @@ router.post('/sync', syncCart);
  *       401:
  *         description: Chưa đăng nhập
  */
-router.post('/add-auth', addToCartUser);
+router.post('/add-auth', verifyToken, addToCartUser);
 
 export default router;
