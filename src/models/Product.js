@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import imageSchema from './Image.js';
+import videoSchema from './Video.js';
 import variantSchema from './Variant.js';
 
 const productSchema = new mongoose.Schema({
@@ -31,10 +32,7 @@ const productSchema = new mongoose.Schema({
     enum: ['sale', 'new', 'hot'],
     default: ''
   },
-  videoSrc: {
-    type: String,
-    default: ''
-  },
+  videoSrc: videoSchema,
   description: {
     type: String,
     default: '',

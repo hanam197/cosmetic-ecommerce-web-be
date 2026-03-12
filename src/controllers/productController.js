@@ -99,23 +99,30 @@ export const getProductsByCategory = async (req, res) => { // req, res are autom
  */
 export const searchProducts = async (req, res) => {
   try {
-    const { q, limit = 20 } = req.query;
+    const name = req.query.name;
+    const q = req.query.q;
+    const limit = parseInt(req.query.limit) || 20;
 
-    if (!q) {
+    const searchTerm = (name || q || "").toString().trim();
+    console.log(`[Search] Query: "${searchTerm}", Limit: ${limit}`);
+
+    if (!searchTerm) {
       return res.status(400).json({
         success: false,
-        message: "Từ khóa tìm kiếm là bắt buộc",
+        message: "Từ khóa tìm kiếm (name hoặc q) là bắt buộc",
       });
     }
 
-    const products = await Product.find({
+    const query = {
       $or: [
-        { name: { $regex: q, $options: "i" } },
-        { description: { $regex: q, $options: "i" } },
+        { name: { $regex: searchTerm, $options: "i" } },
       ],
-      isActive: true,
-    })
-      .limit(parseInt(limit));
+    };
+
+    console.log("[Search] MongoDB Filter:", JSON.stringify(query));
+
+    const products = await Product.find(query).limit(limit);
+    console.log(`[Search] Found ${products.length} products`);
 
     res.status(200).json({
       success: true,
@@ -124,6 +131,7 @@ export const searchProducts = async (req, res) => {
       message: "Tìm kiếm sản phẩm thành công",
     });
   } catch (error) {
+    console.error("[Search] Error:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi khi tìm kiếm sản phẩm",
