@@ -44,3 +44,36 @@ export const findCollections = async (filter = {}, options = {}) => {
     throw error;
   }
 };
+
+export const findCollectionBySlug = async (slug) => {
+  try {
+    const collection = await Collection.findOne({ slug })
+      .populate("items.product")
+      .lean();
+
+    if (!collection) return null;
+
+    const result = {
+      ...collection,
+      items: collection.items.map((item) => {
+        const product = item.product;
+
+        if (!product) return item;
+
+        const variant = product.variants?.find((v) => v.sku === (item.variantSku || item.variant));
+
+        return {
+          ...item,
+          product: {
+            ...product,
+            variants: variant ? [variant] : [],
+          },
+        };
+      }),
+    };
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};

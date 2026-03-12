@@ -108,11 +108,13 @@ export const searchProducts = async (req, res) => {
       });
     }
 
-    const products = await Product.find(
-      { $text: { $search: q }, isActive: true },
-      { score: { $meta: "textScore" } },
-    )
-      .sort({ score: { $meta: "textScore" } })
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+      ],
+      isActive: true,
+    })
       .limit(parseInt(limit));
 
     res.status(200).json({
