@@ -60,7 +60,7 @@ router.get('/', getAllProducts);
  *     tags: [Products]
  *     parameters:
  *       - in: query
- *         name: q
+ *         name: name
  *         required: true
  *         schema:
  *           type: string

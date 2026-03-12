@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+<<<<<<< Updated upstream
     "start": "nodemon src/index.js"
+=======
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+>>>>>>> Stashed changes
   },
   "repository": {
     "type": "git",
