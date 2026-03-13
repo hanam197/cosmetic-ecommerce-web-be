@@ -8,9 +8,9 @@ export const getAllProducts = async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
     const limit = Math.max(Number(req.query.limit) || 4, 1);
-    const { category, tag, search } = req.query;
+    const { category, tag, search, sort } = req.query;
 
-    const result = await findProducts({ category, tag, search, page, limit });
+    const result = await findProducts({ category, tag, search, sort, page, limit });
 
     res.status(200).json(result);
   } catch (err) {
@@ -33,6 +33,11 @@ export const getProductBySlug = async (req, res) => {
         success: false,
         message: "Sản phẩm không tìm thấy",
       });
+    }
+
+    console.log(`[getProductBySlug] Sending product: ${product.name}, videoSrc exists: ${!!product.videoSrc}`);
+    if (product.videoSrc) {
+        console.log(`[getProductBySlug] videoSrc:`, JSON.stringify(product.videoSrc));
     }
 
     res.status(200).json({
@@ -62,7 +67,7 @@ export const getProductBySlug = async (req, res) => {
 export const getProductsByCategory = async (req, res) => { // req, res are automatically created by Express for every HTTP request.
   try {
     const { category, tag } = req.params;
-    const { sortByPrice, page: pageQuery, limit: limitQuery } = req.query;
+    const { sort, page: pageQuery, limit: limitQuery } = req.query;
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
@@ -77,7 +82,7 @@ export const getProductsByCategory = async (req, res) => { // req, res are autom
       filter,
       page,
       limit,
-      sortByPrice
+      sortByPrice: sort
     });
 
     res.status(200).json({
