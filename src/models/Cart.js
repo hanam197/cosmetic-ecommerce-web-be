@@ -30,6 +30,9 @@ const cartItemSchema = new mongoose.Schema({
   image: {
     type: String
   },
+  category: {
+    type: String
+  },
   quantity: {
     type: Number,
     required: [true, 'Quantity is required'],

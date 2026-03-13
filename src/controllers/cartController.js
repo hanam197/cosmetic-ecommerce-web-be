@@ -18,7 +18,7 @@ const getDisplayImage = (product, variant) => {
 
 const getNormalizedVariantItem = async ({ productId, sku, colorName }) => {
   const product = await Product.findById(productId).select(
-    'name price oldPrice images variants.sku variants.colorName variants.images'
+    'name price oldPrice images category variants.sku variants.colorName variants.images'
   );
 
   if (!product) {
@@ -45,7 +45,8 @@ const getNormalizedVariantItem = async ({ productId, sku, colorName }) => {
       colorName: normalizedColorName,
       price: Number(product.price),
       oldPrice: product.oldPrice !== undefined ? Number(product.oldPrice) : undefined,
-      image: getDisplayImage(product, variant)
+      image: getDisplayImage(product, variant),
+      category: product.category
     }
   };
 };
